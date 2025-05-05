@@ -43,11 +43,11 @@ function TeacherListPage() {
     setEditForm(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleDelete = (id) => {
-    if (!window.confirm('確定要刪除這位老師嗎？')) return
-    axios.delete(`/teachers/${id}`)
-      .then(() => fetchTeachers())
-  }
+const handleDelete = async (id) => {
+  if (!window.confirm('確定要刪除這位老師？')) return
+  await axios.delete(`/teachers/${id}`)
+  fetchTeachers() // 重新抓資料
+}
 
   return (
     <div className="max-w-4xl mx-auto p-6">

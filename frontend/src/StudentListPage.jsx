@@ -33,11 +33,11 @@ function StudentListPage() {
       })
   }
 
-  const handleDelete = (id) => {
-   if (!window.confirm('確定要刪除這位學生嗎？')) return
-   axios.delete(`/students/${id}`)
-     .then(() => fetchStudents())
- }
+const handleDelete = async (id) => {
+  if (!window.confirm('確定要刪除這位學生？')) return
+  await axios.delete(`/students/${id}`)
+  fetchStudents() // 重新抓資料
+}
 
   const handleChange = (e) => {
     const { name, value } = e.target

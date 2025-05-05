@@ -156,38 +156,13 @@ app.get('/courses/:id/attendance', async (req, res) => {
   }
 })
 
-// ⬇️ 取得所有課程清單
-app.get('/courses', async (req, res) => {
-  try {
-    const courses = await prisma.course.findMany({
-      orderBy: { date: 'desc' },
-    })
-    res.json(courses)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Failed to fetch courses' })
-  }
-})
-
 // ➕ 老師清單 GET
 app.get('/teachers', async (req, res) => {
   const teachers = await prisma.teacher.findMany()
   res.json(teachers)
 })
 
-app.get('/courses', async (req, res) => {
-  try {
-    const withTeacher = req.query._withTeacher === 'true'
-    const courses = await prisma.course.findMany({
-      orderBy: { date: 'desc' },
-      include: withTeacher ? { teacher: true } : undefined,
-    })
-    res.json(courses)
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch courses' })
-  }
-})
-
+// ⬇️ 取得所有課程清單
 app.get('/courses', async (req, res) => {
   try {
     const withTeacher = req.query._withTeacher === 'true'
@@ -243,13 +218,40 @@ app.get('/courses/:id/summary', async (req, res) => {
   }
 })
 
+// 刪除學生
 app.delete('/students/:id', async (req, res) => {
-  const id = parseInt(req.params.id)
   try {
-    await prisma.attendance.deleteMany({ where: { studentId: id } }) // 刪掉該學生出席紀錄
-    await prisma.student.delete({ where: { id } }) // 刪掉學生
+    await prisma.student.delete({
+      where: { id: Number(req.params.id) }
+    })
     res.json({ success: true })
-  } catch (err) {
+  } catch (error) {
+    console.error('刪除學生失敗:', error)
+    res.status(500).json({ error: '刪除失敗' })
+  }
+})
+
+// 刪除老師
+app.delete('/teachers/:id', async (req, res) => {
+  try {
+    await prisma.teacher.delete({
+      where: { id: Number(req.params.id) }
+    })
+    res.json({ success: true })
+  } catch (error) {
+    console.error('刪除老師失敗:', error)
+    res.status(500).json({ error: '刪除失敗' })
+  }
+})
+
+app.delete('/courses/:id', async (req, res) => {
+  try {
+    await prisma.course.delete({
+      where: { id: Number(req.params.id) }
+    })
+    res.json({ success: true })
+  } catch (error) {
+    console.error('刪除課程失敗:', error)
     res.status(500).json({ error: '刪除失敗' })
   }
 })

@@ -23,16 +23,16 @@ function App() {
             <Link to="/attendance" className="hover:text-yellow-300">✅ 學生點名</Link>
 	    <Link to="/report" className="hover:text-yellow-300">📊 點名紀錄查詢</Link>
 	    <Link to="/students/list" className="hover:text-yellow-300">📋 學生總覽</Link>
-	  <Link to="/teachers/list" className="hover:text-yellow-300">📋 老師總覽</Link>
- 	    <Link to="/courses/list" className="hover:text-yellow-300">📚 課程總覽</Link>
-	    <Link to="/courses/summary" className="hover:text-yellow-300">📈 課程統計</Link>
+	    <Link to="/teachers/list" className="hover:text-yellow-300">📋 老師總覽</Link>
+ 	    <Link to="/courses/summary" className="hover:text-yellow-300">📚 課程總覽</Link>
+	    <Link to="/courses/list" className="hover:text-yellow-300">📈 課程統計</Link>
           </nav>
         </aside>
 
         {/* 右側內容頁面 */}
         <main className="flex-1 bg-white p-8">
           <Routes>
-            <Route path="/students" element={<AddStudentPage />} />
+	    <Route path="/students" element={<AddStudentPage />} />
             <Route path="/courses" element={<AddCoursePage />} />
             <Route path="/attendance" element={<AttendancePage />} />
     	    <Route path="/report" element={<AttendanceReportPage />} />

@@ -13,11 +13,16 @@ function CourseSummaryPage() {
       .then(res => setCourses(res.data))
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('確定要刪除這門課程？')) return
+const handleDelete = async (id) => {
+  if (!window.confirm('確定要刪除這門課程？')) return
+  try {
     await axios.delete(`/courses/${id}`)
     fetchCourses()
+  } catch (error) {
+    alert('刪除失敗')
+    console.error(error)
   }
+}
 
   return (
     <div className="p-6">

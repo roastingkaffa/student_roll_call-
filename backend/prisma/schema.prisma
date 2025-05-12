@@ -45,5 +45,6 @@ model AttendanceRecord {
   status     String  // 'present' or 'absent'
   updatedBy  String  // 'teacher' or 'system'
   updatedAt  DateTime @default(now())
+  date       DateTime //
 }
 

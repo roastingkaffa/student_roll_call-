@@ -1,95 +1,106 @@
+// AttendancePage.jsx
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 
 function AttendancePage() {
   const [courses, setCourses] = useState([])
-  const [selectedCourseId, setSelectedCourseId] = useState(null)
+  const [selectedCourseId, setSelectedCourseId] = useState('')
   const [students, setStudents] = useState([])
-  const [checked, setChecked] = useState({})
+  const [attendance, setAttendance] = useState({})
   const [message, setMessage] = useState('')
 
-  // 載入課程清單
   useEffect(() => {
-    axios.get('/courses')
-      .then(res => setCourses(res.data))
+    axios.get('/courses?_withTeacher=true').then(res => setCourses(res.data))
+    axios.get('/students').then(res => setStudents(res.data))
   }, [])
 
-  // 當選擇課程時，自動載入出席紀錄
-  useEffect(() => {
-    if (selectedCourseId) {
-      axios.get(`/courses/${selectedCourseId}/attendance`)
-        .then(res => {
-          const initialChecked = {}
-          res.data.forEach(student => {
-            initialChecked[student.studentId] = student.status === 'present'
-          })
-          setStudents(res.data)
-          setChecked(initialChecked)
-        })
-    }
-  }, [selectedCourseId])
-
-  const toggleCheckbox = (id) => {
-    setChecked(prev => ({ ...prev, [id]: !prev[id] }))
+  const handleChangeStatus = (studentId, status) => {
+    setAttendance(prev => ({ ...prev, [studentId]: status }))
   }
 
-  const handleSubmit = () => {
-    const presentStudentIds = Object.keys(checked)
-      .filter(id => checked[id])
-      .map(id => parseInt(id))
+  const handleSubmit = async () => {
+    if (!selectedCourseId) return alert('請先選擇課程')
 
-    axios.post(`/courses/${selectedCourseId}/attendance`, {
-      presentStudentIds
-    })
-      .then(() => setMessage('✅ 點名成功！'))
-      .catch(() => setMessage('❌ 點名失敗！'))
+    const today = new Date().toISOString().split('T')[0] // e.g. "2025-05-04"
+
+    const records = students.map(s => ({
+      studentId: s.id,
+      status: attendance[s.id] || 'absent'
+    }))
+
+    try {
+    const tody = new Date().toISOString()
+      await axios.post(`/courses/${selectedCourseId}/attendance`, {
+        date: today,
+        records
+      })
+      setMessage('✅ 點名成功')
+    } catch (err) {
+      setMessage('❌ 發生錯誤')
+    }
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">📋 學生點名</h1>
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">✅ 學生點名</h1>
 
-      {/* 課程下拉選單 */}
-      <div className="mb-6">
-        <label className="block mb-1 font-semibold">選擇課程</label>
-        <select
-          value={selectedCourseId || ''}
-          onChange={(e) => setSelectedCourseId(e.target.value)}
-          className="border px-3 py-2 rounded w-full"
-        >
-          <option value="" disabled>請選擇課程</option>
-          {courses.map(course => (
-            <option key={course.id} value={course.id}>
-              {course.name} - {new Date(course.date).toLocaleDateString()} {course.time}
-            </option>
+      <select
+        value={selectedCourseId}
+        onChange={(e) => setSelectedCourseId(e.target.value)}
+        className="w-full border p-2 rounded"
+      >
+        <option value="">請選擇課程</option>
+        {courses.map(course => (
+          <option key={course.id} value={course.id}>
+            {course.name}（{course.date}）
+          </option>
+        ))}
+      </select>
+
+      <table className="w-full table-auto text-sm border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border px-2 py-1">姓名</th>
+            <th className="border px-2 py-1">學號</th>
+            <th className="border px-2 py-1">點名</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.map(s => (
+            <tr key={s.id}>
+              <td className="border px-2 py-1">{s.name}</td>
+              <td className="border px-2 py-1">{s.studentId}</td>
+              <td className="border px-2 py-1">
+                <label className="mr-4">
+                  <input
+                    type="radio"
+                    name={`attendance-${s.id}`}
+                    value="present"
+                    checked={attendance[s.id] === 'present'}
+                    onChange={() => handleChangeStatus(s.id, 'present')}
+                  />{' '}到
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name={`attendance-${s.id}`}
+                    value="absent"
+                    checked={attendance[s.id] === 'absent' || !attendance[s.id]}
+                    onChange={() => handleChangeStatus(s.id, 'absent')}
+                  />{' '}缺
+                </label>
+              </td>
+            </tr>
           ))}
-        </select>
-      </div>
+        </tbody>
+      </table>
 
-      {/* 學生清單 */}
-      {students.length > 0 && students.map(s => (
-        <div key={s.studentId} className="flex items-center justify-between border p-2 mb-2 rounded">
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={checked[s.studentId] || false}
-              onChange={() => toggleCheckbox(s.studentId)}
-              className="w-5 h-5"
-            />
-            <span>{s.name}（{s.studentNumber}）</span>
-          </label>
-          <span className="text-sm text-gray-500">剩餘堂數：{s.remainingHours}</span>
-        </div>
-      ))}
-
-      {students.length > 0 && (
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 text-white px-4 py-2 mt-4 rounded hover:bg-blue-700"
-        >
-          送出點名
-        </button>
-      )}
+      <button
+        onClick={handleSubmit}
+        className="bg-indigo-600 text-white px-4 py-2 rounded mt-4"
+      >
+        提交點名結果
+      </button>
 
       {message && <p className="mt-4 text-green-600">{message}</p>}
     </div>
